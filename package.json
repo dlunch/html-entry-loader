@@ -1,0 +1,12 @@
+{
+  "name": "html-entry-loader",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "loader-utils": "^2.0.0",
+    "node-html-parser": "^1.4.3"
+  },
+  "peerDependencies": {
+    "webpack": "^5"
+  }
+}
