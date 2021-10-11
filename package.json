@@ -4,7 +4,7 @@
   "main": "index.js",
   "dependencies": {
     "loader-utils": "^2.0.0",
-    "node-html-parser": "^1.4.3"
+    "node-html-parser": "^5.0.0"
   },
   "peerDependencies": {
     "webpack": "^5"
