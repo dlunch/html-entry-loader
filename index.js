@@ -19,37 +19,18 @@ function generateLink(cssFiles, hash) {
   return cssFiles.map((x) => `<link rel='stylesheet' href='${x}?${hash}' />`).join('');
 }
 
-function chunkContainsUserRequest(chunk, userRequest, compilation) {
-  for (const entryModule of compilation.chunkGraph.getChunkEntryModulesIterable(chunk)) {
-    if (entryModule && entryModule.userRequest) {
-      return entryModule.userRequest === userRequest;
-    }
-
-    if (entryModule && entryModule.dependencies) {
-      for (const dependency of entryModule.dependencies) {
-        if (dependency.module.userRequest === userRequest) {
-          return true;
-        }
-      }
-    }
-  }
-  return false;
-}
-
-function findEntrypointContainingUserRequest(userRequest, compilation) {
+function findEntrypointContainingModule(module, compilation) {
   for (const entrypoint of compilation.entrypoints.values()) {
-    for (const chunk of entrypoint.chunks) {
-      if (chunkContainsUserRequest(chunk, userRequest, compilation)) {
-        return entrypoint;
-      }
+    if (entrypoint.getModulePreOrderIndex(module)) {
+      return entrypoint
     }
   }
 
   throw Error();
 }
 
-function injectChunks(content, userRequest, compilation) {
-  const entrypoint = findEntrypointContainingUserRequest(userRequest, compilation);
+function injectChunks(content, module, compilation) {
+  const entrypoint = findEntrypointContainingModule(module, compilation);
   const jsFiles = entrypoint.getFiles().filter((x) => x.endsWith('.js'));
   const cssFiles = entrypoint.getFiles().filter((x) => x.endsWith('.css'));
 
@@ -65,9 +46,10 @@ class EntryExtractPlugin {
 
     compiler.hooks.thisCompilation.tap(pluginName, (compilation) => {
       compilation.hooks.processAssets.tap(pluginName, () => {
-        for (const [userRequest, content] of Object.entries(entries)) {
-          const filename = path.basename(userRequest);
-          const injected = injectChunks(content, userRequest, compilation);
+        for (const [moduleId, content] of Object.entries(entries)) {
+          const module = compilation.findModule(moduleId);
+          const filename = path.basename(module.userRequest);
+          const injected = injectChunks(content, module, compilation);
 
           /* eslint-disable-next-line no-param-reassign */
           compilation.assets[filename] = {
@@ -82,7 +64,7 @@ class EntryExtractPlugin {
         if (isEntryModule(compilation, module)) {
           /* eslint-disable-next-line no-param-reassign */
           loaderContext[pluginName] = (content) => {
-            entries[module.userRequest] = content;
+            entries[module.identifier()] = content;
           };
         } else {
           /* eslint-disable-next-line no-param-reassign */
