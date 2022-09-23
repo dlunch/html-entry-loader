@@ -1,6 +1,5 @@
 const path = require('path');
 
-const loaderUtils = require('loader-utils');
 const { parse } = require('node-html-parser');
 
 const { NormalModule } = require('webpack');
