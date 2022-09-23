@@ -1,27 +1,31 @@
-const path = require('path');
+const path = require("path");
 
-const { parse } = require('node-html-parser');
+const { parse } = require("node-html-parser");
 
-const { NormalModule } = require('webpack');
+const { NormalModule } = require("webpack");
 
-const pluginName = 'HtmlEntryLoader';
+const pluginName = "HtmlEntryLoader";
 
 function isEntryModule(compilation, module) {
   return compilation.moduleGraph.getIssuer(module) === null;
 }
 
 function generateScript(jsFiles, hash) {
-  return jsFiles.map((x) => `<script type='text/javascript' src='${x}?${hash}'></script>`).join('');
+  return jsFiles
+    .map((x) => `<script type='text/javascript' src='${x}?${hash}'></script>`)
+    .join("");
 }
 
 function generateLink(cssFiles, hash) {
-  return cssFiles.map((x) => `<link rel='stylesheet' href='${x}?${hash}' />`).join('');
+  return cssFiles
+    .map((x) => `<link rel='stylesheet' href='${x}?${hash}' />`)
+    .join("");
 }
 
 function findEntrypointContainingModule(module, compilation) {
   for (const entrypoint of compilation.entrypoints.values()) {
     if (entrypoint.getModulePreOrderIndex(module)) {
-      return entrypoint
+      return entrypoint;
     }
   }
 
@@ -30,12 +34,14 @@ function findEntrypointContainingModule(module, compilation) {
 
 function injectChunks(content, module, compilation) {
   const entrypoint = findEntrypointContainingModule(module, compilation);
-  const jsFiles = entrypoint.getFiles().filter((x) => x.endsWith('.js'));
-  const cssFiles = entrypoint.getFiles().filter((x) => x.endsWith('.css'));
+  const jsFiles = entrypoint.getFiles().filter((x) => x.endsWith(".js"));
+  const cssFiles = entrypoint.getFiles().filter((x) => x.endsWith(".css"));
 
-  const inject = generateScript(jsFiles, compilation.hash) + generateLink(cssFiles, compilation.hash);
+  const inject =
+    generateScript(jsFiles, compilation.hash) +
+    generateLink(cssFiles, compilation.hash);
 
-  return content.replace('</head>', `${inject}</head>`);
+  return content.replace("</head>", `${inject}</head>`);
 }
 
 class EntryExtractPlugin {
@@ -59,17 +65,20 @@ class EntryExtractPlugin {
       });
     });
     compiler.hooks.thisCompilation.tap(pluginName, (compilation) => {
-      NormalModule.getCompilationHooks(compilation).loader.tap(pluginName, (loaderContext, module) => {
-        if (isEntryModule(compilation, module)) {
-          /* eslint-disable-next-line no-param-reassign */
-          loaderContext[pluginName] = (content) => {
-            entries[module.identifier()] = content;
-          };
-        } else {
-          /* eslint-disable-next-line no-param-reassign */
-          delete loaderContext[pluginName];
+      NormalModule.getCompilationHooks(compilation).loader.tap(
+        pluginName,
+        (loaderContext, module) => {
+          if (isEntryModule(compilation, module)) {
+            /* eslint-disable-next-line no-param-reassign */
+            loaderContext[pluginName] = (content) => {
+              entries[module.identifier()] = content;
+            };
+          } else {
+            /* eslint-disable-next-line no-param-reassign */
+            delete loaderContext[pluginName];
+          }
         }
-      });
+      );
     });
   }
 }
@@ -98,9 +107,9 @@ function loader(source) {
       return;
     }
 
-    if (element.tagName === 'SCRIPT') {
+    if (element.tagName === "SCRIPT") {
       scripts.push(element);
-    } else if (element.tagName === 'LINK') {
+    } else if (element.tagName === "LINK") {
       links.push(element);
     }
   });
@@ -109,7 +118,7 @@ function loader(source) {
 
   for (const script of scripts) {
     const src = script.attributes.src;
-    if (src && !(src.startsWith('http') || src.startsWith('//'))) {
+    if (src && !(src.startsWith("http") || src.startsWith("//"))) {
       requires.push(src);
       script.parentNode.removeChild(script);
     }
@@ -118,7 +127,12 @@ function loader(source) {
   for (const link of links) {
     const href = link.attributes.href;
     const rel = link.attributes.rel;
-    if (rel && link.attributes.rel === 'stylesheet' && href && !(href.startsWith('http') || href.startsWith('//'))) {
+    if (
+      rel &&
+      link.attributes.rel === "stylesheet" &&
+      href &&
+      !(href.startsWith("http") || href.startsWith("//"))
+    ) {
       requires.push(href);
       link.parentNode.removeChild(link);
     }
@@ -129,16 +143,18 @@ function loader(source) {
   }
 
   let result = root.toString();
-  if (root.firstChild.tagName === 'html') {
+  if (root.firstChild.tagName === "html") {
     result = `<!doctype html>${result}`;
   }
   if (this[pluginName]) {
     this[pluginName](result);
-    result = '';
+    result = "";
   }
 
-  const requireClauses = requires.map((x) => `require('${x}');`).join('\n');
-  const resultJs = `${requireClauses}\nmodule.exports = ${JSON.stringify(result)}`;
+  const requireClauses = requires.map((x) => `require('${x}');`).join("\n");
+  const resultJs = `${requireClauses}\nmodule.exports = ${JSON.stringify(
+    result
+  )}`;
   callback(null, resultJs);
 }
 
