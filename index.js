@@ -24,7 +24,7 @@ function generateLink(cssFiles, hash) {
 
 function findEntrypointContainingModule(module, compilation) {
   for (const entrypoint of compilation.entrypoints.values()) {
-    if (entrypoint.getModulePreOrderIndex(module)) {
+    if (entrypoint.getModulePreOrderIndex(module) !== undefined) {
       return entrypoint;
     }
   }
