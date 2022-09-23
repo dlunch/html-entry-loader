@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "main": "index.js",
   "dependencies": {
-    "loader-utils": "^3.2.0",
     "node-html-parser": "^6.1.0"
   },
   "peerDependencies": {
