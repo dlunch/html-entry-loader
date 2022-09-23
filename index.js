@@ -107,7 +107,7 @@ function loader(source) {
 
   const root = parse(source, { script: true, style: true, pre: true });
 
-  const options = loaderUtils.getOptions(this);
+  const options = this.getOptions();
 
   const scripts = [];
   const links = [];
